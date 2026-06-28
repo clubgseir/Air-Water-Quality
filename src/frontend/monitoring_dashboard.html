@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 Moniteur Air & Eau - Enfants</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', cursive;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+        }
+
+        /* === HEADER === */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-align: center;
+            padding: 20px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        /* === MAIN CONTENT === */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            overflow-x: hidden;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        /* === ALERTE === */
+        .alert-section {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border: 3px solid #ffc107;
+            border-radius: 15px;
+            padding: 15px;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .alert-title {
+            font-size: 1.3em;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .alert-message {
+            font-size: 1.1em;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .alert-message.show {
+            display: block;
+        }
+
+        #noAlert {
+            font-size: 1.1em;
+            color: #28a745;
+        }
+
+        /* === GRILLE CAPTEURS === */
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        
+        .sensor-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 10px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 140px;
+            position: relative;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .sensor-icon {
+            font-size: 1.8em;
+            margin-bottom: 4px;
+        }
+
+        .sensor-label {
+            font-size: 0.9em;
+            opacity: 0.95;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .sensor-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 2px;
+            line-height: 1;
+        }
+
+        .sensor-unit {
+            font-size: 0.85em;
+            opacity: 0.85;
+        }
+
+        /* === GAUGE (HYGROMÈTRE) === */
+        .gauge-container {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            margin: 6px 0;
+        }
+
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .gauge-background {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 8;
+        }
+
+        .gauge-progress {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke 0.3s ease, stroke-dashoffset 0.5s ease;
+        }
+
+        .gauge-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 100%;
+        }
+
+        .gauge-percent {
+            font-size: 1.4em;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .gauge-label-small {
+            font-size: 0.7em;
+            opacity: 0.8;
+        }
+
+        /* === INDICATEUR QUALITÉ === */
+        .quality-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .indicator-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: quality-pulse 1.5s infinite;
+        }
+
+        @keyframes quality-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* === GRAPHIQUE === */
+        .charts-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 350px;
+            overflow: visible;
+            margin-bottom: 20px;
+        }
+
+        .charts-section h2 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+
+        #chartContainer {
+            flex: 1;
+            position: relative;
+            height: 300px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #eee;
+            padding: 10px;
+        }
+
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* === COULEURS PAR ÉTAT === */
+        .status-excellent {
+            background: linear-gradient(135deg, #51cf66 0%, #2f9e44 100%);
+        }
+
+        .status-good {
+            background: linear-gradient(135deg, #69db7c 0%, #40c057 100%);
+        }
+
+        .status-fair {
+            background: linear-gradient(135deg, #ffd43b 0%, #fab005 100%);
+            color: #333 !important;
+        }
+
+        .status-poor {
+            background: linear-gradient(135deg, #ff8787 0%, #ff6b6b 100%);
+        }
+
+        .status-critical {
+            background: linear-gradient(135deg, #f76707 0%, #d9480f 100%);
+            animation: danger-pulse 0.5s infinite;
+        }
+
+        @keyframes danger-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* === FOOTER === */
+        footer {
+            text-align: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.8em;
+            flex-shrink: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* === CONTENEUR TEST VALEURS === */
+        .test-input-container {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 2px dashed rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .test-input-label {
+            font-size: 0.75em;
+            opacity: 0.8;
+            font-weight: bold;
+        }
+
+        .test-input-field {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: white;
+            font-size: 0.9em;
+            font-weight: bold;
+            width: 80px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .test-input-field::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .test-input-field:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .test-input-unit {
+            font-size: 0.75em;
+            opacity: 0.8;
+        }
+
+        /* === SCROLLBAR === */
+        .main-content::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.6);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.9);
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 1024px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .sensor-icon {
+                font-size: 3em;
+            }
+
+            .sensor-value {
+                font-size: 2.3em;
+            }
+
+            .sensors-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.6em;
+            }
+
+            .sensor-value {
+                font-size: 1.8em;
+            }
+
+            .sensors-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 Air & Eau Quality Monitor 💧</h1>
+            <p class="subtitle">Surveillez la qualité de votre environnement!</p>
+        </header>
+
+
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- Alerte Section -->
+            <div class="alert-section">
+                <div class="alert-title">⚠️ Alertes</div>
+                <div class="alert-message" id="alertMessage"></div>
+                <div id="noAlert" style="font-size: 1.1em; color: #666;">✅ Tout va bien! L'air et l'eau sont en bon état.</div>
+            </div>
+
+            <!-- Capteurs -->
+            <div class="sensors-grid">
+                <div class="sensor-card status-good">
+                    <div class="sensor-icon">🌡️</div>
+                    <div class="sensor-label">Température</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-background" cx="60" cy="60" r="50"></circle>
+                            <circle class="gauge-progress" id="tempGauge" cx="60" cy="60" r="50" stroke="white"></circle>
+                        </svg>
+                        <div class="gauge-text">
+                            <div class="gauge-percent" id="tempPercent">--</div>
+                            <div class="gauge-label-small">%</div>
+                        </div>
+                    </div>
+                    <div class="sensor-value" id="tempValue">--</div>
+                    <div class="sensor-unit">°C</div>
+                    <div class="quality-indicator" id="tempQuality">
+                        <div class="indicator-dot" style="background: #51cf66;"></div>
+                        <span id="tempQualityText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="tempTestInput" placeholder="°C" step="0.1" onchange="updateFromTestInput('temp')">
+                        <span class="test-input-unit">°C</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card status-good">
+                    <div class="sensor-icon">💧</div>
+                    <div class="sensor-label">Humidité</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-background" cx="60" cy="60" r="50"></circle>
+                            <circle class="gauge-progress" id="humGauge" cx="60" cy="60" r="50" stroke="white"></circle>
+                        </svg>
+                        <div class="gauge-text">
+                            <div class="gauge-percent" id="humPercent">--</div>
+                            <div class="gauge-label-small">%</div>
+                        </div>
+                    </div>
+                    <div class="sensor-value" id="humValue">--</div>
+                    <div class="sensor-unit">%</div>
+                    <div class="quality-indicator" id="humQuality">
+                        <div class="indicator-dot" style="background: #51cf66;"></div>
+                        <span id="humQualityText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="humTestInput" placeholder="%" min="0" max="100" step="1" onchange="updateFromTestInput('hum')">
+                        <span class="test-input-unit">%</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card status-good" id="mq135Card">
+                    <div class="sensor-icon">🌬️</div>
+                    <div class="sensor-label">Qualité Air (Gaz)</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-background" cx="60" cy="60" r="50"></circle>
+                            <circle class="gauge-progress" id="mq135Gauge" cx="60" cy="60" r="50" stroke="white"></circle>
+                        </svg>
+                        <div class="gauge-text">
+                            <div class="gauge-percent" id="mq135Percent">--</div>
+                            <div class="gauge-label-small">%</div>
+                        </div>
+                    </div>
+                    <div class="sensor-value" id="mq135Value">--</div>
+                    <div class="sensor-unit">ppm</div>
+                    <div class="quality-indicator" id="mq135Quality">
+                        <div class="indicator-dot" style="background: #51cf66;"></div>
+                        <span id="mq135QualityText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="mq135TestInput" placeholder="ppm" min="0" step="10" onchange="updateFromTestInput('mq135')">
+                        <span class="test-input-unit">ppm</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card status-good" id="mq9Card">
+                    <div class="sensor-icon">⚠️</div>
+                    <div class="sensor-label">Gaz Inflammables</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-background" cx="60" cy="60" r="50"></circle>
+                            <circle class="gauge-progress" id="mq9Gauge" cx="60" cy="60" r="50" stroke="white"></circle>
+                        </svg>
+                        <div class="gauge-text">
+                            <div class="gauge-percent" id="mq9Percent">--</div>
+                            <div class="gauge-label-small">%</div>
+                        </div>
+                    </div>
+                    <div class="sensor-value" id="mq9Value">--</div>
+                    <div class="sensor-unit">ppm</div>
+                    <div class="quality-indicator" id="mq9Quality">
+                        <div class="indicator-dot" style="background: #51cf66;"></div>
+                        <span id="mq9QualityText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="mq9TestInput" placeholder="ppm" min="0" step="1" onchange="updateFromTestInput('mq9')">
+                        <span class="test-input-unit">ppm</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card status-good" id="waterCard">
+                    <div class="sensor-icon">🚰</div>
+                    <div class="sensor-label">Qualité de l'Eau</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 120 120">
+                            <circle class="gauge-background" cx="60" cy="60" r="50"></circle>
+                            <circle class="gauge-progress" id="waterGauge" cx="60" cy="60" r="50" stroke="white"></circle>
+                        </svg>
+                        <div class="gauge-text">
+                            <div class="gauge-percent" id="waterPercent">--</div>
+                            <div class="gauge-label-small">%</div>
+                        </div>
+                    </div>
+                    <div class="sensor-value" id="waterValue">--</div>
+                    <div class="sensor-unit">µS/cm</div>
+                    <div class="quality-indicator" id="waterQuality">
+                        <div class="indicator-dot" style="background: #51cf66;"></div>
+                        <span id="waterQualityText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="waterTestInput" placeholder="µS/cm" min="0" step="50" onchange="updateFromTestInput('water')">
+                        <span class="test-input-unit">µS/cm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphiques -->
+            <div class="charts-section">
+                <h2>📊 Historique (dernières 60 mesures)</h2>
+                <div id="chartContainer">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Projet Air & Water Quality - CLUB GSEIR 🎓 | Web Interface v1.0</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ========== CONFIGURATION ==========
+        const THRESHOLDS = {
+            mq135: { excellent: 400, good: 800, fair: 1200, poor: 2000 },
+            mq9: { excellent: 10, good: 20, fair: 50, poor: 100 },
+            water: { excellent: 300, good: 600, fair: 1000, poor: 2000 },
+            temp: { min: 15, max: 30 },
+            humidity: { min: 30, max: 70 }
+        };
+
+        let port = null;
+        let reader = null;
+        let chartInstance = null;
+        let autoRefreshEnabled = true;  // Flag pour désactiver rafraîchissement auto pendant tests
+
+        // ========== FONCTION: Récupérer données du serveur Flask ==========
+        async function fetchDataFromServer() {
+            // Ne rafraîchir que si le mode auto est activé
+            if (!autoRefreshEnabled) return;
+            
+            try {
+                const response = await fetch('/api/data');
+                const json = await response.json();
+                
+                if (json.latest) {
+                    const data = {
+                        temp: json.latest.temp,
+                        hum: json.latest.humidity,
+                        mq135: json.latest.mq135,
+                        mq9: json.latest.mq9,
+                        water: json.latest.water
+                    };
+                    updateDisplay(data);
+                    
+                    // Charger l'historique
+                    if (json.history) {
+                        sensorHistory.labels = json.history.timestamps.map(ts => {
+                            const date = new Date(ts);
+                            return date.toLocaleTimeString('fr-FR');
+                        });
+                        sensorHistory.temp = json.history.temp;
+                        sensorHistory.humidity = json.history.humidity;
+                        sensorHistory.mq135 = json.history.mq135;
+                        sensorHistory.mq9 = json.history.mq9;
+                        sensorHistory.water = json.history.water;
+                        updateChart();
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur récupération données:', error);
+            }
+        }
+
+        // Mettre à jour les données toutes les 2 secondes
+        setInterval(fetchDataFromServer, 2000);
+        let sensorHistory = {
+            labels: [],
+            mq135: [],
+            mq9: [],
+            water: [],
+            temp: [],
+            humidity: []
+        };
+
+        // Initialiser graphique au chargement
+        window.addEventListener('load', () => {
+            initializeChart();
+        });
+
+        // ========== FONCTION: Lister ports COM ==========
+        async function listPorts() {
+            try {
+                if (!navigator.serial) {
+                    alert('Web Serial API non supportée! Utilisez Chrome/Edge récent.');
+                    return;
+                }
+                const ports = await navigator.serial.getPorts();
+                const select = document.getElementById('portSelect');
+                if (!select) return; // Élément n'existe pas
+                select.innerHTML = '<option value="">Sélectionner port COM...</option>';
+                
+                if (ports.length === 0) {
+                    const option = document.createElement('option');
+                    option.text = 'Aucun port détecté - Cliquez Rafraîchir';
+                    option.disabled = true;
+                    select.appendChild(option);
+                } else {
+                    ports.forEach((p, i) => {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.text = `COM${i + 1}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur accès ports:', error);
+                alert('Erreur accès ports COM: ' + error.message);
+            }
+        }
+
+        // ========== FONCTION: Rafraîchir ports ==========
+        async function refreshPorts() {
+            try {
+                if (!navigator.serial) {
+                    alert('Web Serial API non supportée! Utilisez Chrome/Edge récent.');
+                    return;
+                }
+                // Demander à l'utilisateur de sélectionner un port
+                const port = await navigator.serial.requestPort();
+                listPorts();
+            } catch (error) {
+                console.log('Sélection annulée ou erreur:', error.message);
+            }
+        }
+
+        // ========== FONCTION: Connexion Serial ==========
+        async function connectSerial() {
+            try {
+                const select = document.getElementById('portSelect');
+                if (!select) {
+                    alert('Interface de sélection de port non disponible. Utilisez les champs de test.');
+                    return;
+                }
+                
+                const ports = await navigator.serial.getPorts();
+                const portIndex = select.value;
+                
+                if (portIndex === '') {
+                    alert('Sélectionnez un port COM!');
+                    return;
+                }
+                
+                port = ports[parseInt(portIndex)];
+                await port.open({ baudRate: 115200 });
+                
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                document.getElementById('statusDot').className = 'status-dot connected';
+                document.getElementById('statusText').textContent = '✅ Connecté';
+                select.disabled = true;
+                
+                readSerialData();
+            } catch (error) {
+                alert('Erreur connexion: ' + error.message);
+            }
+        }
+
+        // ========== FONCTION: Déconnexion ==========
+        async function disconnectSerial() {
+            try {
+                if (reader) reader.cancel();
+                await port.close();
+                port = null;
+                
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('statusDot').className = 'status-dot disconnected';
+                document.getElementById('statusText').textContent = '❌ Déconnecté';
+                const select = document.getElementById('portSelect');
+                if (select) select.disabled = false;
+            } catch (error) {
+                console.error('Erreur déconnexion:', error);
+            }
+        }
+
+        // ========== FONCTION: Lecture données Serial ==========
+        async function readSerialData() {
+            const decoder = new TextDecoderStream();
+            reader = port.readable.pipeThrough(decoder).getReader();
+            let buffer = '';
+            
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += value;
+                    const lines = buffer.split('\n');
+                    buffer = lines[lines.length - 1];
+                    
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('{')) {
+                            try {
+                                const data = JSON.parse(line);
+                                updateDisplay(data);
+                            } catch (e) {
+                                console.log('Ligne invalide:', line);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lecture:', error);
+            }
+        }
+
+        // ========== FONCTION: Mise à jour affichage ==========
+        function updateDisplay(data) {
+            // Mise à jour valeurs
+            if (data.temp !== undefined) {
+                document.getElementById('tempValue').textContent = data.temp.toFixed(1);
+                updateGauge('temp', data.temp, 0, 50, THRESHOLDS.temp);
+            }
+            if (data.hum !== undefined) {
+                document.getElementById('humValue').textContent = data.hum.toFixed(1);
+                updateGauge('hum', data.hum, 0, 100, THRESHOLDS.humidity);
+            }
+            if (data.mq135 !== undefined) {
+                document.getElementById('mq135Value').textContent = Math.round(data.mq135);
+                updateCardStatus('mq135Card', data.mq135, THRESHOLDS.mq135);
+                updateGauge('mq135', data.mq135, 0, 2000, THRESHOLDS.mq135);
+            }
+            if (data.mq9 !== undefined) {
+                document.getElementById('mq9Value').textContent = Math.round(data.mq9);
+                updateCardStatus('mq9Card', data.mq9, THRESHOLDS.mq9);
+                updateGauge('mq9', data.mq9, 0, 100, THRESHOLDS.mq9);
+            }
+            if (data.water !== undefined) {
+                document.getElementById('waterValue').textContent = Math.round(data.water);
+                updateCardStatus('waterCard', data.water, THRESHOLDS.water);
+                updateGauge('water', data.water, 0, 2000, THRESHOLDS.water);
+            }
+            
+            // Historique (garder 60 dernières mesures)
+            const now = new Date().toLocaleTimeString('fr-FR');
+            sensorHistory.labels.push(now);
+            sensorHistory.mq135.push(data.mq135 || 0);
+            sensorHistory.mq9.push(data.mq9 || 0);
+            sensorHistory.water.push(data.water || 0);
+            sensorHistory.temp.push(data.temp || 0);
+            sensorHistory.humidity.push(data.hum || 0);
+            
+            if (sensorHistory.labels.length > 60) {
+                sensorHistory.labels.shift();
+                sensorHistory.mq135.shift();
+                sensorHistory.mq9.shift();
+                sensorHistory.water.shift();
+                sensorHistory.temp.shift();
+                sensorHistory.humidity.shift();
+            }
+            
+            updateChart();
+            checkAlerts(data);
+        }
+
+        // ========== FONCTION: Mettre à jour jauge ==========
+        function updateGauge(sensorType, value, min, max, thresholds) {
+            const percent = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+            const circumference = 2 * Math.PI * 50; // rayon = 50
+            const offset = circumference * (1 - percent / 100);
+            
+            const gaugeElement = document.getElementById(sensorType + 'Gauge');
+            const percentElement = document.getElementById(sensorType + 'Percent');
+            const qualityElement = document.getElementById(sensorType + 'Quality');
+            const qualityTextElement = document.getElementById(sensorType + 'QualityText');
+            const indicatorDot = qualityElement.querySelector('.indicator-dot');
+            
+            // Animer la jauge
+            gaugeElement.style.strokeDasharray = circumference;
+            gaugeElement.style.strokeDashoffset = offset;
+            percentElement.textContent = Math.round(percent);
+            
+            // Déterminer la couleur et la qualité
+            let color, quality;
+            
+            if (sensorType === 'temp' || sensorType === 'hum') {
+                // Pour temp et humidité, 100% = bon (zone entre min et max)
+                if (value >= thresholds.min && value <= thresholds.max) {
+                    color = '#51cf66';
+                    quality = '✅ Excellent';
+                } else if (Math.abs(value - thresholds.min) < 5 || Math.abs(value - thresholds.max) < 5) {
+                    color = '#ffd43b';
+                    quality = '⚠️ Correct';
+                } else {
+                    color = '#ff8787';
+                    quality = '🚨 À ajuster';
+                }
+            } else {
+                // Pour les capteurs de qualité (moins = mieux)
+                if (value <= thresholds.excellent) {
+                    color = '#51cf66';
+                    quality = '✅ Excellent';
+                } else if (value <= thresholds.good) {
+                    color = '#69db7c';
+                    quality = '✅ Bon';
+                } else if (value <= thresholds.fair) {
+                    color = '#ffd43b';
+                    quality = '⚠️ Moyen';
+                } else if (value <= thresholds.poor) {
+                    color = '#ff8787';
+                    quality = '🚨 Mauvais';
+                } else {
+                    color = '#f76707';
+                    quality = '🚨 Critique';
+                }
+            }
+            
+            gaugeElement.style.stroke = color;
+            indicatorDot.style.background = color;
+            qualityTextElement.textContent = quality;
+        }
+
+        // ========== FONCTION: Mise à jour statut card ==========
+        function updateCardStatus(cardId, value, thresholds) {
+            const card = document.getElementById(cardId);
+            card.className = 'sensor-card';
+            
+            if (value <= thresholds.excellent) {
+                card.classList.add('status-excellent');
+            } else if (value <= thresholds.good) {
+                card.classList.add('status-good');
+            } else if (value <= thresholds.fair) {
+                card.classList.add('status-fair');
+            } else if (value <= thresholds.poor) {
+                card.classList.add('status-poor');
+            } else {
+                card.classList.add('status-critical');
+            }
+        }
+
+        // ========== FONCTION: Vérifier alertes ==========
+        function checkAlerts(data) {
+            let alerts = [];
+            
+            // Vérifier MQ135 (Qualité de l'air)
+            if (data.mq135 !== undefined) {
+                if (data.mq135 > THRESHOLDS.mq135.poor) {
+                    alerts.push('🚨 AIR (MQ135) TRÈS POLLUÉ! Ouvrez les fenêtres immédiatement!');
+                } else if (data.mq135 > THRESHOLDS.mq135.fair) {
+                    alerts.push('⚠️ Qualité de l\'air mauvaise - Aérez votre intérieur');
+                } else if (data.mq135 > THRESHOLDS.mq135.good) {
+                    alerts.push('✅ Qualité de l\'air acceptable');
+                }
+            }
+            
+            // Vérifier MQ9 (Gaz inflammables)
+            if (data.mq9 !== undefined) {
+                if (data.mq9 > THRESHOLDS.mq9.poor) {
+                    alerts.push('🚨 GAZ INFLAMMABLES DÉTECTÉS! Aérer la zone immédiatement!');
+                } else if (data.mq9 > THRESHOLDS.mq9.fair) {
+                    alerts.push('⚠️ Présence de gaz inflammables - Aération recommandée');
+                }
+            }
+            
+            // Vérifier Eau
+            if (data.water !== undefined) {
+                if (data.water > THRESHOLDS.water.poor) {
+                    alerts.push('🚨 L\'EAU EST TRÈS POLLUÉE! Ne pas la boire!');
+                } else if (data.water > THRESHOLDS.water.fair) {
+                    alerts.push('⚠️ Qualité de l\'eau mauvaise - À faire tester');
+                } else if (data.water > THRESHOLDS.water.good) {
+                    alerts.push('✅ Qualité de l\'eau acceptable');
+                }
+            }
+            
+            // Vérifier Température
+            if (data.temp !== undefined) {
+                if (data.temp < THRESHOLDS.temp.min) {
+                    alerts.push('❄️ Il fait trop froid (' + data.temp + '°C) - Chauffage recommandé');
+                } else if (data.temp > THRESHOLDS.temp.max) {
+                    alerts.push('🔥 Il fait trop chaud (' + data.temp + '°C) - Ventilation recommandée');
+                }
+            }
+            
+            // Vérifier Humidité
+            if (data.hum !== undefined) {
+                if (data.hum < THRESHOLDS.humidity.min) {
+                    alerts.push('💨 L\'air est trop sec (' + data.hum + '%) - Humidificateur recommandé');
+                } else if (data.hum > THRESHOLDS.humidity.max) {
+                    alerts.push('💧 L\'air est trop humide (' + data.hum + '%) - Déshumidification recommandée');
+                }
+            }
+            
+            const alertDiv = document.getElementById('alertMessage');
+            const noAlertDiv = document.getElementById('noAlert');
+            
+            if (alerts.length > 0) {
+                alertDiv.innerHTML = alerts.join('<br>');
+                alertDiv.classList.add('show');
+                noAlertDiv.style.display = 'none';
+                // Jouer le son seulement pour les alertes critiques
+                if (alerts.some(a => a.includes('🚨'))) {
+                    playAlertSound();
+                }
+            } else {
+                alertDiv.classList.remove('show');
+                noAlertDiv.style.display = 'block';
+            }
+        }
+
+        // ========== FONCTION: Son d'alerte ==========
+        function playAlertSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // ========== FONCTION: Initialiser graphique vide ==========
+        function updateFromTestInput(sensorType) {
+            // Récupérer la valeur du champ d'input
+            const inputElement = document.getElementById(sensorType + 'TestInput');
+            const value = parseFloat(inputElement.value);
+            
+            if (isNaN(value)) {
+                alert('Veuillez entrer une valeur valide!');
+                return;
+            }
+            
+            // Désactiver le rafraîchissement automatique pendant 10 secondes
+            autoRefreshEnabled = false;
+            
+            // Créer un objet de données pour simuler la réception
+            const testData = {};
+            
+            switch(sensorType) {
+                case 'temp':
+                    testData.temp = value;
+                    break;
+                case 'hum':
+                    testData.hum = value;
+                    break;
+                case 'mq135':
+                    testData.mq135 = value;
+                    break;
+                case 'mq9':
+                    testData.mq9 = value;
+                    break;
+                case 'water':
+                    testData.water = value;
+                    break;
+            }
+            
+            // Mettre à jour l'affichage avec la valeur test
+            updateDisplay(testData);
+            
+            // Réactiver le rafraîchissement automatique après 10 secondes
+            setTimeout(() => {
+                autoRefreshEnabled = true;
+                fetchDataFromServer();
+            }, 10000);
+        }
+
+        // ========== FONCTION: Initialiser graphique vide ==========
+        function initializeChart() {
+            // Ajouter quelques points de démo
+            for (let i = 0; i < 10; i++) {
+                sensorHistory.labels.push(`${i}:00`);
+                sensorHistory.mq135.push(400 + Math.random() * 200);
+                sensorHistory.mq9.push(5 + Math.random() * 10);
+                sensorHistory.water.push(300 + Math.random() * 200);
+                sensorHistory.temp.push(20 + Math.random() * 5);
+                sensorHistory.humidity.push(50 + Math.random() * 20);
+            }
+            
+            // Initialiser les jauges avec des valeurs de démo
+            updateGauge('temp', 22, 0, 50, THRESHOLDS.temp);
+            updateGauge('hum', 55, 0, 100, THRESHOLDS.humidity);
+            updateGauge('mq135', 500, 0, 2000, THRESHOLDS.mq135);
+            updateGauge('mq9', 15, 0, 100, THRESHOLDS.mq9);
+            updateGauge('water', 450, 0, 2000, THRESHOLDS.water);
+            
+            updateChart();
+        }
+
+        // ========== FONCTION: Graphique ==========
+        function updateChart() {
+            const ctx = document.getElementById('chartCanvas');
+            if (!ctx) return;
+            
+            if (!chartInstance) {
+                // Créer le graphique pour la première fois
+                chartInstance = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: sensorHistory.labels.map((_, i) => i % 10 === 0 ? sensorHistory.labels[i] : ''),
+                        datasets: [
+                            {
+                                label: 'MQ135 - Qualité Air (ppm)',
+                                data: sensorHistory.mq135,
+                                borderColor: '#1f77b4',
+                                backgroundColor: 'rgba(31, 119, 180, 0.05)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#1f77b4',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                tension: 0.3,
+                                yAxisID: 'y',
+                                fill: false
+                            },
+                            {
+                                label: 'MQ9 - Gaz Inflammables (ppm)',
+                                data: sensorHistory.mq9,
+                                borderColor: '#d62728',
+                                backgroundColor: 'rgba(214, 39, 40, 0.05)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#d62728',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                tension: 0.3,
+                                yAxisID: 'y1',
+                                fill: false
+                            },
+                            {
+                                label: 'Qualité Eau (µS/cm)',
+                                data: sensorHistory.water,
+                                borderColor: '#2ca02c',
+                                backgroundColor: 'rgba(44, 160, 44, 0.05)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#2ca02c',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                tension: 0.3,
+                                yAxisID: 'y',
+                                fill: false
+                            },
+                            {
+                                label: 'Température (°C)',
+                                data: sensorHistory.temp,
+                                borderColor: '#ff7f0e',
+                                backgroundColor: 'rgba(255, 127, 14, 0.05)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#ff7f0e',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                tension: 0.3,
+                                yAxisID: 'y1',
+                                fill: false
+                            },
+                            {
+                                label: 'Humidité (%)',
+                                data: sensorHistory.humidity,
+                                borderColor: '#9467bd',
+                                backgroundColor: 'rgba(148, 103, 189, 0.05)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#9467bd',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                tension: 0.3,
+                                yAxisID: 'y1',
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    padding: 10,
+                                    font: { size: 11 },
+                                    usePointStyle: true,
+                                    boxWidth: 8
+                                }
+                            },
+                            title: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: { display: false }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: 'MQ135/Eau (ppm/µS)', font: { size: 11 } },
+                                min: 0,
+                                max: 2000
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: 'Température/Humidité/MQ9', font: { size: 11 } },
+                                min: 0,
+                                max: 100,
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Mettre à jour les données existantes
+                chartInstance.data.labels = sensorHistory.labels.map((_, i) => i % 10 === 0 ? sensorHistory.labels[i] : '');
+                chartInstance.data.datasets[0].data = sensorHistory.mq135;
+                chartInstance.data.datasets[1].data = sensorHistory.mq9;
+                chartInstance.data.datasets[2].data = sensorHistory.water;
+                chartInstance.data.datasets[3].data = sensorHistory.temp;
+                chartInstance.data.datasets[4].data = sensorHistory.humidity;
+                chartInstance.update('none'); // Pas d'animation pour plus de rapidité
+            }
+        }
+
+        // Initialisation
+        listPorts();
+    </script>
+</body>
+</html>

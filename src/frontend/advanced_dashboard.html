@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 Moniteur Air & Eau PRO - v3.0</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
+    <style>
+        :root {
+            --primary: #667eea;
+            --success: #51cf66;
+            --warning: #ffd43b;
+            --danger: #ff6b6b;
+            --orange: #f76707;
+            --light-blue: #e7f5ff;
+            --light-green: #f1fdf0;
+            --light-purple: #f8f0fc;
+        }
+
+        * {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #f0fdf4 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* === HEADER === */
+        .navbar-custom {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%) !important;
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.2);
+            border-bottom: 5px solid #10b981;
+        }
+
+        .navbar-brand {
+            font-size: 1.6em;
+            font-weight: 800;
+            color: white !important;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(81, 207, 102, 0.1);
+            border-radius: 20px;
+            border: 2px solid var(--success);
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .status-badge.offline {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-badge.offline .status-dot {
+            background: var(--danger);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* === ALERT SECTION === */
+        .alert-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-left: 5px solid var(--warning);
+            display: none;
+        }
+
+        .alert-section.show {
+            display: block;
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        .alert-section.critical {
+            border-left-color: var(--danger);
+            background: rgba(255, 107, 107, 0.05);
+            animation: danger-pulse 0.5s infinite;
+        }
+
+        @keyframes danger-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .alert-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-message {
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        /* === SENSOR CARDS === */
+        .sensor-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border-radius: 20px;
+            padding: 18px 14px 14px 14px;
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.12);
+            transition: all 0.3s;
+            position: relative;
+            overflow: visible;
+            border-top: 6px solid #0ea5e9;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            margin: 0;
+        }
+
+        .sensor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.2);
+            border-top-color: #10b981;
+        }
+
+        .sensor-card.critical {
+            border-top-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, white 100%);
+        }
+
+        .sensor-card.warning {
+            border-top-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, white 100%);
+        }
+
+        .sensor-card.good {
+            border-top-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, white 100%);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .sensor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .sensor-icon {
+            font-size: 2em;
+            flex-shrink: 0;
+        }
+
+        .sensor-label {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .sensor-value {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .sensor-unit {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            margin: 15px 0 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+        }
+
+        .gauge-background {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 18;
+            stroke-linecap: round;
+        }
+
+        .gauge-zone-green {
+            fill: none;
+            stroke: #10b981;
+            stroke-width: 18;
+            stroke-linecap: round;
+        }
+
+        .gauge-zone-orange {
+            fill: none;
+            stroke: #f59e0b;
+            stroke-width: 18;
+            stroke-linecap: round;
+        }
+
+        .gauge-zone-red {
+            fill: none;
+            stroke: #ef4444;
+            stroke-width: 18;
+            stroke-linecap: round;
+        }
+
+        .gauge-needle {
+            fill: none;
+            stroke: #1f2937;
+            stroke-width: 3;
+            stroke-linecap: round;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: 100px 100px;
+        }
+
+        .gauge-center {
+            fill: #1f2937;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .quality-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 12px;
+            background: rgba(81, 207, 102, 0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .quality-status.warning {
+            background: rgba(255, 212, 59, 0.1);
+            color: #b8860b;
+        }
+
+        .quality-status.danger {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger);
+        }
+
+        .status-dot-small {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
+        .quality-status.warning .status-dot-small {
+            background: #b8860b;
+        }
+
+        .quality-status.danger .status-dot-small {
+            background: var(--danger);
+        }
+
+        /* === STICKERS & REWARDS === */
+        .sticker-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 100px;
+        }
+
+        .sticker {
+            font-size: 3em;
+            animation: bounce 0.5s ease-out;
+            cursor: pointer;
+            user-select: none;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(0) rotate(-180deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* === STATS DASHBOARD === */
+        .stats-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #06b6d4 0%, #a8d8ea 100%);
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            line-height: 1;
+            color: #0f172a;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.95;
+            margin-top: 8px;
+            color: #1e293b;
+        }
+
+        /* === CHART === */
+        .chart-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+            margin-bottom: 20px;
+        }
+
+        .chart-section h5 {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #chartContainer {
+            position: relative;
+            height: 550px;
+            width: 100%;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .sensor-card {
+                padding: 12px;
+            }
+
+            .sensor-value {
+                font-size: 1.5em;
+            }
+
+            .sensor-icon {
+                font-size: 1.5em;
+            }
+
+            .sticker-container {
+                bottom: 10px;
+                right: 10px;
+            }
+
+            .sticker {
+                font-size: 2.5em;
+            }
+        }
+
+        /* === ANIMATIONS === */
+        .animate__delay-1 { animation-delay: 0.2s; }
+        .animate__delay-2 { animation-delay: 0.4s; }
+        .animate__delay-3 { animation-delay: 0.6s; }
+
+        /* === MODAL POUR CONNEXION === */
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        /* === ACHIEVEMENTS === */
+        .achievement-badge {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ffd43b 0%, #fab005 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: bounce 0.5s ease-out;
+        }
+
+        /* === LOADING === */
+        .spinner-border-sm {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-width: 0.3em;
+        }
+
+        /* === SCROLLBAR === */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .no-data i {
+            font-size: 3em;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+
+        /* === TEST INPUT FIELDS === */
+        .test-input-container {
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 2px dashed #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            background: rgba(6, 182, 212, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .test-input-label {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .test-input-field {
+            background: white;
+            border: 2px solid #06b6d4;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #333;
+            font-size: 0.95em;
+            font-weight: 600;
+            width: 90px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .test-input-field::placeholder {
+            color: #bbb;
+        }
+
+        .test-input-field:focus {
+            outline: none;
+            background: #f0fdf4;
+            border-color: #10b981;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .test-input-unit {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #999;
+            min-width: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                🌍 Air & Eau Quality Monitor <span style="font-size: 0.7em; color: #999;">v3.0 PRO</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-3">
+                        <div class="status-badge" id="statusBadge">
+                            <div class="status-dot"></div>
+                            <span>Connecté</span>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-custom btn-custom-primary btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                            <i class="bi bi-gear"></i> Paramètres
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- ALERTS SECTION -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert-section" id="alertSection">
+                    <div class="alert-title" id="alertTitle">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span id="alertTitleText">Alerte</span>
+                    </div>
+                    <div class="alert-message" id="alertMessage"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-item">
+                    <div class="stat-value" id="avgTemp">--</div>
+                    <div class="stat-label">🌡️ Température Moyenne</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-item">
+                    <div class="stat-value" id="avgHum">--</div>
+                    <div class="stat-label">💧 Humidité Moyenne</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-item">
+                    <div class="stat-value" id="airQuality">--</div>
+                    <div class="stat-label">🌬️ Qualité Air</div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-item">
+                    <div class="stat-value" id="uptime">0h</div>
+                    <div class="stat-label">⏱️ Temps en Ligne</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SENSOR CARDS -->
+        <div class="row mb-4 g-4">
+            <!-- Température -->
+            <div class="col-md-6 col-lg-4">
+                <div class="sensor-card" id="tempCard">
+                    <div class="sensor-header">
+                        <div>
+                            <div class="sensor-label">Température</div>
+                            <div class="sensor-value" id="tempValue">--</div>
+                            <div class="sensor-unit">°C</div>
+                        </div>
+                        <div class="sensor-icon">🌡️</div>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 120">
+                            <!-- Zones de couleur (background) -->
+                            <path class="gauge-zone-green" d="M 20,100 A 80,80 0 0,1 73,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-orange" d="M 73,44 A 80,80 0 0,1 127,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-red" d="M 127,44 A 80,80 0 0,1 180,100" fill="none" stroke-width="18"></path>
+                            <!-- Aiguille -->
+                            <line class="gauge-needle" id="tempNeedle" x1="100" y1="100" x2="100" y2="20" stroke-width="3"></line>
+                            <!-- Centre (cercle) -->
+                            <circle class="gauge-center" cx="100" cy="100" r="6"></circle>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="tempStatus">
+                        <div class="status-dot-small"></div>
+                        <span id="tempStatusText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="tempTestInput" placeholder="°C" step="0.1" onchange="updateFromTestInput('temp')">
+                        <span class="test-input-unit">°C</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Humidité -->
+            <div class="col-md-6 col-lg-4">
+                <div class="sensor-card" id="humCard">
+                    <div class="sensor-header">
+                        <div>
+                            <div class="sensor-label">Humidité</div>
+                            <div class="sensor-value" id="humValue">--</div>
+                            <div class="sensor-unit">%</div>
+                        </div>
+                        <div class="sensor-icon">💧</div>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 120">
+                            <path class="gauge-zone-green" d="M 20,100 A 80,80 0 0,1 73,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-orange" d="M 73,44 A 80,80 0 0,1 127,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-red" d="M 127,44 A 80,80 0 0,1 180,100" fill="none" stroke-width="18"></path>
+                            <line class="gauge-needle" id="humNeedle" x1="100" y1="100" x2="100" y2="20" stroke-width="3"></line>
+                            <circle class="gauge-center" cx="100" cy="100" r="6"></circle>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="humStatus">
+                        <div class="status-dot-small"></div>
+                        <span id="humStatusText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="humTestInput" placeholder="%" min="0" max="100" step="1" onchange="updateFromTestInput('humidity')">
+                        <span class="test-input-unit">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qualité Air -->
+            <div class="col-md-6 col-lg-4">
+                <div class="sensor-card" id="mq135Card">
+                    <div class="sensor-header">
+                        <div>
+                            <div class="sensor-label">Qualité Air (gaz)</div>
+                            <div class="sensor-value" id="mq135Value">--</div>
+                            <div class="sensor-unit">ppm</div>
+                        </div>
+                        <div class="sensor-icon">🌬️</div>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 120">
+                            <path class="gauge-zone-green" d="M 20,100 A 80,80 0 0,1 73,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-orange" d="M 73,44 A 80,80 0 0,1 127,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-red" d="M 127,44 A 80,80 0 0,1 180,100" fill="none" stroke-width="18"></path>
+                            <line class="gauge-needle" id="mq135Needle" x1="100" y1="100" x2="100" y2="20" stroke-width="3"></line>
+                            <circle class="gauge-center" cx="100" cy="100" r="6"></circle>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="mq135Status">
+                        <div class="status-dot-small"></div>
+                        <span id="mq135StatusText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="mq135TestInput" placeholder="ppm" min="0" step="10" onchange="updateFromTestInput('mq135')">
+                        <span class="test-input-unit">ppm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gaz Inflammables -->
+            <div class="col-md-6 col-lg-4">
+                <div class="sensor-card" id="mq9Card">
+                    <div class="sensor-header">
+                        <div>
+                            <div class="sensor-label">Gaz Inflammables</div>
+                            <div class="sensor-value" id="mq9Value">--</div>
+                            <div class="sensor-unit">ppm</div>
+                        </div>
+                        <div class="sensor-icon">⚠️</div>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 120">
+                            <path class="gauge-zone-green" d="M 20,100 A 80,80 0 0,1 73,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-orange" d="M 73,44 A 80,80 0 0,1 127,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-red" d="M 127,44 A 80,80 0 0,1 180,100" fill="none" stroke-width="18"></path>
+                            <line class="gauge-needle" id="mq9Needle" x1="100" y1="100" x2="100" y2="20" stroke-width="3"></line>
+                            <circle class="gauge-center" cx="100" cy="100" r="6"></circle>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="mq9Status">
+                        <div class="status-dot-small"></div>
+                        <span id="mq9StatusText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="mq9TestInput" placeholder="ppm" min="0" step="1" onchange="updateFromTestInput('mq9')">
+                        <span class="test-input-unit">ppm</span>
+                    </div>
+                </div>
+            </div>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="mq9Status">
+                        <div class="status-dot-small"></div>
+                        <span id="mq9StatusText">Excellent</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Qualité Eau -->
+            <div class="col-md-6 col-lg-4">
+                <div class="sensor-card" id="waterCard">
+                    <div class="sensor-header">
+                        <div>
+                            <div class="sensor-label">Qualité Eau</div>
+                            <div class="sensor-value" id="waterValue">--</div>
+                            <div class="sensor-unit">µS/cm</div>
+                        </div>
+                        <div class="sensor-icon">🚰</div>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 120">
+                            <path class="gauge-zone-green" d="M 20,100 A 80,80 0 0,1 73,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-orange" d="M 73,44 A 80,80 0 0,1 127,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-red" d="M 127,44 A 80,80 0 0,1 180,100" fill="none" stroke-width="18"></path>
+                            <line class="gauge-needle" id="waterNeedle" x1="100" y1="100" x2="100" y2="20" stroke-width="3"></line>
+                            <circle class="gauge-center" cx="100" cy="100" r="6"></circle>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="waterStatus">
+                        <div class="status-dot-small"></div>
+                        <span id="waterStatusText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="waterTestInput" placeholder="µS/cm" min="0" step="50" onchange="updateFromTestInput('water')">
+                        <span class="test-input-unit">µS/cm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Température Eau -->
+            <div class="col-md-6 col-lg-4">
+                <div class="sensor-card" id="waterTempCard">
+                    <div class="sensor-header">
+                        <div>
+                            <div class="sensor-label">Température Eau</div>
+                            <div class="sensor-value" id="waterTempValue">--</div>
+                            <div class="sensor-unit">°C</div>
+                        </div>
+                        <div class="sensor-icon">🌊</div>
+                    </div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 120">
+                            <path class="gauge-zone-green" d="M 20,100 A 80,80 0 0,1 73,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-orange" d="M 73,44 A 80,80 0 0,1 127,44" fill="none" stroke-width="18"></path>
+                            <path class="gauge-zone-red" d="M 127,44 A 80,80 0 0,1 180,100" fill="none" stroke-width="18"></path>
+                            <line class="gauge-needle" id="waterTempNeedle" x1="100" y1="100" x2="100" y2="20" stroke-width="3"></line>
+                            <circle class="gauge-center" cx="100" cy="100" r="6"></circle>
+                        </svg>
+                    </div>
+                    <div class="quality-status" id="waterTempStatus">
+                        <div class="status-dot-small"></div>
+                        <span id="waterTempStatusText">Excellent</span>
+                    </div>
+                    <div class="test-input-container">
+                        <span class="test-input-label">Test:</span>
+                        <input type="number" class="test-input-field" id="waterTempTestInput" placeholder="°C" step="0.1" onchange="updateFromTestInput('waterTemp')">
+                        <span class="test-input-unit">°C</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHART -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-section">
+                    <h5><i class="bi bi-graph-up"></i> Historique (Dernières 60 mesures)</h5>
+                    <div id="chartContainer">
+                        <canvas id="sensorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STICKERS CONTAINER -->
+    <div class="sticker-container" id="stickerContainer"></div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-gear"></i> Paramètres</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Volume Alertes</h6>
+                    <input type="range" class="form-range" id="volumeSlider" min="0" max="100" value="70">
+                    <small class="text-muted">Volume: <span id="volumeValue">70</span>%</small>
+
+                    <hr>
+
+                    <h6 class="mt-3">Seuils d'Alerte</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Max Température (°C)</label>
+                        <input type="number" class="form-control" id="tempMaxInput" value="30" min="0" max="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Max Humidité (%)</label>
+                        <input type="number" class="form-control" id="humMaxInput" value="70" min="0" max="100">
+                    </div>
+
+                    <hr>
+
+                    <h6>Notifications Visuelles</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="vibrateCheck" checked>
+                        <label class="form-check-label" for="vibrateCheck">Vibration</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="soundCheck" checked>
+                        <label class="form-check-label" for="soundCheck">Alerte Sonore</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-custom btn-custom-primary" onclick="saveSettings()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // ========== CONFIGURATION ==========
+        const CONFIG = {
+            THRESHOLDS: {
+                temp: { min: 15, max: 30, critical: 40 },
+                humidity: { min: 30, max: 70, critical: 90 },
+                mq135: { excellent: 400, good: 800, fair: 1200, poor: 2000 },
+                mq9: { excellent: 10, good: 20, fair: 50, poor: 100 },
+                water: { excellent: 300, good: 600, fair: 1000, poor: 2000 },
+                waterTemp: { min: 10, max: 30, critical: 40 }
+            },
+            STICKERS: ['🎉', '🌟', '✨', '🎊', '🏆', '💯', '👏', '🚀'],
+            SOUND_URLS: {
+                warning: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj==',
+                critical: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj=='
+            }
+        };
+
+        let sensorData = {
+            labels: [],
+            temp: [],
+            humidity: [],
+            mq135: [],
+            mq9: [],
+            water: [],
+            waterTemp: []
+        };
+
+        let port = null;
+        let reader = null;
+        let chartInstance = null;
+        let startTime = Date.now();
+
+        // ========== INITIALIZATION ==========
+        window.addEventListener('load', () => {
+            listPorts();
+            initChart();
+            setupVolumeSlider();
+            loadInitialData();
+            setInterval(updateUptime, 60000);
+            setInterval(fetchServerData, 2000);
+        });
+
+        // ========== LOAD DATA FROM SERVER ==========
+        async function loadInitialData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                updateDisplay(data);
+            } catch (error) {
+                console.log('Serveur démarrage, données simulées...');
+                // Données par défaut simulées
+                updateDisplay({
+                    temp: 22.5,
+                    humidity: 55,
+                    mq135: 450,
+                    mq9: 15,
+                    water: 400,
+                    waterTemp: 18
+                });
+            }
+        }
+
+        async function fetchServerData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                updateDisplay(data);
+            } catch (error) {
+                // Silencieusement échouer si pas de serveur
+            }
+        }
+
+        // ========== SERIAL FUNCTIONS ==========
+        async function listPorts() {
+            try {
+                if (!navigator.serial) {
+                    showAlert('Web Serial API non disponible', 'Utilisez Chrome/Edge récent', 'warning');
+                    return;
+                }
+                const ports = await navigator.serial.getPorts();
+                const select = document.getElementById('portSelect');
+                select.innerHTML = '<option value="">Détection automatique...</option>';
+                ports.forEach((p, i) => {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.text = `Port ${i + 1}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        async function connectSerial() {
+            try {
+                const ports = await navigator.serial.getPorts();
+                let selectedPort = null;
+
+                if (document.getElementById('portSelect').value === '') {
+                    selectedPort = await navigator.serial.requestPort();
+                } else {
+                    selectedPort = ports[parseInt(document.getElementById('portSelect').value)];
+                }
+
+                const baudRate = parseInt(document.getElementById('baudSelect').value);
+                await selectedPort.open({ baudRate: baudRate });
+
+                port = selectedPort;
+                document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('disconnectBtn').style.display = 'block';
+                document.getElementById('statusBadge').classList.remove('offline');
+                
+                updateStatusBadge(true);
+                readSerialData();
+            } catch (error) {
+                showAlert('Erreur Connexion', error.message, 'danger');
+            }
+        }
+
+        async function disconnectSerial() {
+            try {
+                if (reader) {
+                    await reader.cancel();
+                }
+                if (port) {
+                    await port.close();
+                    port = null;
+                }
+                document.getElementById('connectBtn').style.display = 'block';
+                document.getElementById('disconnectBtn').style.display = 'none';
+                document.getElementById('statusBadge').classList.add('offline');
+                updateStatusBadge(false);
+            } catch (error) {
+                console.error('Erreur déconnexion:', error);
+            }
+        }
+
+        async function readSerialData() {
+            try {
+                const decoder = new TextDecoderStream();
+                reader = port.readable.pipeThrough(decoder).getReader();
+                let buffer = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += value;
+                    const lines = buffer.split('\n');
+                    buffer = lines[lines.length - 1];
+
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('{')) {
+                            try {
+                                const data = JSON.parse(line);
+                                updateDisplay(data);
+                            } catch (e) {
+                                console.log('Ligne invalide:', line);
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lecture:', error);
+                if (error.name !== 'AbortError') {
+                    updateStatusBadge(false);
+                }
+            }
+        }
+
+        // ========== UPDATE FROM TEST INPUT ==========
+        function updateFromTestInput(sensorType) {
+            const inputElement = document.getElementById(sensorType + 'TestInput');
+            const value = parseFloat(inputElement.value);
+
+            if (isNaN(value)) {
+                alert('Veuillez entrer une valeur valide!');
+                return;
+            }
+
+            // Créer un objet de données pour simuler la réception
+            const testData = {};
+
+            switch(sensorType) {
+                case 'temp':
+                    testData.temp = value;
+                    break;
+                case 'humidity':
+                    testData.humidity = value;
+                    break;
+                case 'mq135':
+                    testData.mq135 = value;
+                    break;
+                case 'mq9':
+                    testData.mq9 = value;
+                    break;
+                case 'water':
+                    testData.water = value;
+                    break;
+                case 'waterTemp':
+                    testData.waterTemp = value;
+                    break;
+            }
+
+            // Mettre à jour l'affichage avec la valeur test
+            updateDisplay(testData);
+        }
+
+        // ========== UPDATE DISPLAY ==========
+        function updateDisplay(data) {
+            // Mise à jour des valeurs
+            if (data.temp !== undefined) {
+                updateGauge('temp', data.temp, 0, 50);
+                document.getElementById('tempValue').textContent = data.temp.toFixed(1);
+            }
+            if (data.humidity !== undefined) {
+                updateGauge('hum', data.humidity, 0, 100);
+                document.getElementById('humValue').textContent = data.humidity.toFixed(1);
+            }
+            if (data.mq135 !== undefined) {
+                updateGauge('mq135', data.mq135, 0, 2000);
+                document.getElementById('mq135Value').textContent = Math.round(data.mq135);
+            }
+            if (data.mq9 !== undefined) {
+                updateGauge('mq9', data.mq9, 0, 100);
+                document.getElementById('mq9Value').textContent = Math.round(data.mq9);
+            }
+            if (data.water !== undefined) {
+                updateGauge('water', data.water, 0, 2000);
+                document.getElementById('waterValue').textContent = Math.round(data.water);
+            }
+            if (data.waterTemp !== undefined) {
+                updateGauge('waterTemp', data.waterTemp, 0, 50);
+                document.getElementById('waterTempValue').textContent = data.waterTemp.toFixed(1);
+            }
+
+            // Vérification des seuils
+            checkThresholds(data);
+
+            // Sauvegarde historique
+            const now = new Date().toLocaleTimeString('fr-FR');
+            sensorData.labels.push(now);
+            sensorData.temp.push(data.temp || 0);
+            sensorData.humidity.push(data.humidity || 0);
+            sensorData.mq135.push(data.mq135 || 0);
+            sensorData.mq9.push(data.mq9 || 0);
+            sensorData.water.push(data.water || 0);
+            sensorData.waterTemp.push(data.waterTemp || 0);
+
+            if (sensorData.labels.length > 60) {
+                sensorData.labels.shift();
+                sensorData.temp.shift();
+                sensorData.humidity.shift();
+                sensorData.mq135.shift();
+                sensorData.mq9.shift();
+                sensorData.water.shift();
+                sensorData.waterTemp.shift();
+            }
+
+            updateChart();
+            updateStats();
+        }
+
+        function updateGauge(sensor, value, min, max) {
+            // Calculer le pourcentage (0 à 100%)
+            const percent = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+            
+            // Convertir le pourcentage en angle (-90° à 90°)
+            const angle = (percent / 100) * 180 - 90;
+
+            // Récupérer l'aiguille et la mettre à jour
+            const needle = document.getElementById(sensor + 'Needle');
+            if (needle) {
+                needle.style.transform = `rotate(${angle}deg)`;
+            }
+
+            // Déterminer la couleur en fonction du pourcentage
+            let color = '#10b981'; // Vert par défaut
+            if (percent > 66) color = '#ef4444'; // Rouge
+            else if (percent > 33) color = '#f59e0b'; // Orange
+
+            if (needle) {
+                needle.style.stroke = color;
+            }
+
+            // Mise à jour du statut
+            const statusDiv = document.getElementById(sensor + 'Status');
+            const statusText = document.getElementById(sensor + 'StatusText');
+            const statusDot = statusDiv.querySelector('.status-dot-small');
+
+            if (statusDiv && statusText && statusDot) {
+                let status = 'Bon';
+                if (percent > 66) status = 'Critique';
+                else if (percent > 33) status = 'Moyen';
+                
+                statusDiv.className = 'quality-status ' + (percent > 66 ? 'danger' : percent > 33 ? 'warning' : '');
+                statusText.textContent = status;
+                statusDot.style.background = color;
+            }
+
+            // Mise à jour de la carte
+            updateSensorCard(sensor, (percent > 66 ? 'danger' : percent > 33 ? 'warning' : 'good'));
+        }
+
+        function getColorByValue(sensor, value) {
+            const thresholds = CONFIG.THRESHOLDS;
+            
+            switch(sensor) {
+                case 'temp':
+                    if (value < 10) return '#0096d6';
+                    if (value < 15) return '#1f7ed9';
+                    if (value < 20) return '#40c057';
+                    if (value < 25) return '#94d82d';
+                    if (value < 30) return '#ffc107';
+                    if (value < 35) return '#ff9800';
+                    return '#f44236';
+                case 'hum':
+                    if (value < 20) return '#f44236';
+                    if (value < 30) return '#ff9800';
+                    if (value < 40) return '#ffc107';
+                    if (value < 60) return '#40c057';
+                    if (value < 75) return '#40c057';
+                    if (value < 85) return '#ffc107';
+                    return '#f44236';
+                case 'mq135':
+                    if (value <= 400) return '#40c057';
+                    if (value <= 800) return '#66bb6a';
+                    if (value <= 1200) return '#ffc107';
+                    if (value <= 2000) return '#ff9800';
+                    return '#f44236';
+                case 'mq9':
+                    if (value <= 10) return '#40c057';
+                    if (value <= 20) return '#66bb6a';
+                    if (value <= 50) return '#ffc107';
+                    if (value <= 100) return '#ff9800';
+                    return '#f44236';
+                case 'water':
+                    if (value <= 300) return '#40c057';
+                    if (value <= 600) return '#66bb6a';
+                    if (value <= 1000) return '#ffc107';
+                    if (value <= 2000) return '#ff9800';
+                    return '#f44236';
+                case 'waterTemp':
+                    if (value < 10) return '#f44236';
+                    if (value < 15) return '#ff9800';
+                    if (value < 20) return '#40c057';
+                    if (value < 25) return '#40c057';
+                    if (value < 30) return '#ffc107';
+                    return '#f44236';
+                default:
+                    return '#667eea';
+            }
+        }
+
+        function getStatusByValue(sensor, value) {
+            const thresholds = CONFIG.THRESHOLDS;
+            
+            switch(sensor) {
+                case 'temp':
+                case 'waterTemp':
+                    if (value >= thresholds[sensor].min && value <= thresholds[sensor].max) return '✅ Excellent';
+                    if (Math.abs(value - thresholds[sensor].max) < 5) return '⚠️ Attention';
+                    return '🚨 Critique';
+                case 'humidity':
+                    if (value >= thresholds.humidity.min && value <= thresholds.humidity.max) return '✅ Excellent';
+                    if (Math.abs(value - thresholds.humidity.max) < 10) return '⚠️ Attention';
+                    return '🚨 Critique';
+                case 'mq135':
+                case 'mq9':
+                case 'water':
+                    if (value <= thresholds[sensor].excellent) return '✅ Excellent';
+                    if (value <= thresholds[sensor].good) return '✅ Bon';
+                    if (value <= thresholds[sensor].fair) return '⚠️ Moyen';
+                    if (value <= thresholds[sensor].poor) return '🚨 Mauvais';
+                    return '🚨 Critique';
+                default:
+                    return 'Inconnu';
+            }
+        }
+
+        function getStatusClass(status) {
+            if (status.includes('✅')) return '';
+            if (status.includes('⚠️')) return 'warning';
+            if (status.includes('🚨')) return 'danger';
+            return '';
+        }
+
+        function updateSensorCard(sensor, status) {
+            const card = document.getElementById(sensor + 'Card');
+            if (!card) return;
+
+            card.classList.remove('good', 'warning', 'critical');
+            
+            if (status.includes('✅')) {
+                card.classList.add('good');
+            } else if (status.includes('⚠️')) {
+                card.classList.add('warning');
+            } else if (status.includes('🚨')) {
+                card.classList.add('critical');
+                triggerShake(card);
+            }
+        }
+
+        function triggerShake(element) {
+            element.style.animation = 'none';
+            setTimeout(() => {
+                element.style.animation = 'shake 0.5s';
+            }, 10);
+        }
+
+        // ========== THRESHOLDS CHECK ==========
+        function checkThresholds(data) {
+            let alerts = [];
+            let isCritical = false;
+
+            // Température
+            if (data.temp !== undefined) {
+                if (data.temp > CONFIG.THRESHOLDS.temp.critical) {
+                    alerts.push('🔥 TEMPÉRATURE CRITIQUE! Refroidir immédiatement!');
+                    isCritical = true;
+                } else if (data.temp > CONFIG.THRESHOLDS.temp.max) {
+                    alerts.push('⚠️ Température trop élevée (' + data.temp + '°C)');
+                } else if (data.temp < 10) {
+                    alerts.push('❄️ Température trop basse (' + data.temp + '°C)');
+                }
+            }
+
+            // Humidité
+            if (data.humidity !== undefined) {
+                if (data.humidity > CONFIG.THRESHOLDS.humidity.critical) {
+                    alerts.push('💧 HUMIDITÉ EXTRÊME! Aérer immédiatement!');
+                    isCritical = true;
+                } else if (data.humidity > CONFIG.THRESHOLDS.humidity.max) {
+                    alerts.push('⚠️ Humidité trop élevée (' + data.humidity + '%)');
+                } else if (data.humidity < 20) {
+                    alerts.push('💨 Humidité trop basse (' + data.humidity + '%)');
+                }
+            }
+
+            // Gaz inflammables
+            if (data.mq9 !== undefined) {
+                if (data.mq9 > CONFIG.THRESHOLDS.mq9.poor) {
+                    alerts.push('🚨 GAZ INFLAMMABLES DÉTECTÉS! Aérer immédiatement!');
+                    isCritical = true;
+                } else if (data.mq9 > CONFIG.THRESHOLDS.mq9.fair) {
+                    alerts.push('⚠️ Présence de gaz inflammables - Aération recommandée');
+                }
+            }
+
+            // Qualité de l'air
+            if (data.mq135 !== undefined) {
+                if (data.mq135 > CONFIG.THRESHOLDS.mq135.poor) {
+                    alerts.push('🌬️ AIR TRÈS POLLUÉ! Aérer immédiatement!');
+                    isCritical = true;
+                } else if (data.mq135 > CONFIG.THRESHOLDS.mq135.fair) {
+                    alerts.push('⚠️ Qualité de l\'air mauvaise - Aération recommandée');
+                } else if (data.mq135 > CONFIG.THRESHOLDS.mq135.good) {
+                    alerts.push('✅ Qualité de l\'air acceptable');
+                }
+            }
+
+            // Qualité de l'eau
+            if (data.water !== undefined) {
+                if (data.water > CONFIG.THRESHOLDS.water.poor) {
+                    alerts.push('🚰 EAU TRÈS POLLUÉE! Risque sanitaire!');
+                    isCritical = true;
+                } else if (data.water > CONFIG.THRESHOLDS.water.fair) {
+                    alerts.push('⚠️ Qualité de l\'eau mauvaise - À faire tester');
+                } else if (data.water > CONFIG.THRESHOLDS.water.good) {
+                    alerts.push('✅ Qualité de l\'eau acceptable');
+                }
+            }
+
+            showAlerts(alerts, isCritical);
+        }
+
+        function showAlerts(alerts, isCritical) {
+            const section = document.getElementById('alertSection');
+            const message = document.getElementById('alertMessage');
+
+            if (alerts.length > 0) {
+                section.classList.add('show');
+                if (isCritical) {
+                    section.classList.add('critical');
+                    playSound('critical');
+                    triggerVibration();
+                    spawnConfetti();
+                } else {
+                    section.classList.remove('critical');
+                    playSound('warning');
+                }
+                message.innerHTML = alerts.join('<br>');
+                spawnSticker();
+            } else {
+                section.classList.remove('show', 'critical');
+            }
+        }
+
+        // ========== AUDIO & VIBRATION ==========
+        function playSound(type) {
+            if (!document.getElementById('soundCheck').checked) return;
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            if (type === 'critical') {
+                oscillator.frequency.value = 1000;
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } else {
+                oscillator.frequency.value = 600;
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        function triggerVibration() {
+            if (!document.getElementById('vibrateCheck').checked || !navigator.vibrate) return;
+            navigator.vibrate([200, 100, 200]);
+        }
+
+        // ========== STICKERS & REWARDS ==========
+        function spawnSticker() {
+            const container = document.getElementById('stickerContainer');
+            const sticker = document.createElement('div');
+            sticker.className = 'sticker';
+            sticker.textContent = CONFIG.STICKERS[Math.floor(Math.random() * CONFIG.STICKERS.length)];
+            container.appendChild(sticker);
+
+            setTimeout(() => sticker.remove(), 1000);
+        }
+
+        function spawnConfetti() {
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.textContent = ['🎉', '✨', '🌟', '💫'][Math.floor(Math.random() * 4)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-50px';
+                confetti.style.fontSize = (1 + Math.random() * 2) + 'em';
+                document.body.appendChild(confetti);
+
+                const duration = 2 + Math.random() * 1;
+                const xMovement = (Math.random() - 0.5) * 200;
+                
+                confetti.animate([
+                    { transform: 'translateY(0) translateX(0)', opacity: 1 },
+                    { transform: `translateY(${window.innerHeight + 100}px) translateX(${xMovement}px)`, opacity: 0 }
+                ], {
+                    duration: duration * 1000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                });
+
+                setTimeout(() => confetti.remove(), duration * 1000);
+            }
+        }
+
+        // ========== CHART ==========
+        function initChart() {
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '🌡️ Température Air (°C)',
+                            data: [],
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#ff6b6b',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '💧 Humidité (%)',
+                            data: [],
+                            borderColor: '#4dabf7',
+                            backgroundColor: 'rgba(77, 171, 247, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#4dabf7',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '🌬️ Qualité Air (ppm)',
+                            data: [],
+                            borderColor: '#ffd43b',
+                            backgroundColor: 'rgba(255, 212, 59, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#ffd43b',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '💨 Gaz Inflammables (ppm)',
+                            data: [],
+                            borderColor: '#f76707',
+                            backgroundColor: 'rgba(247, 103, 7, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#f76707',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '💧 Qualité Eau (µS/cm)',
+                            data: [],
+                            borderColor: '#51cf66',
+                            backgroundColor: 'rgba(81, 207, 102, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#51cf66',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: '🌊 Température Eau (°C)',
+                            data: [],
+                            borderColor: '#9c36b5',
+                            backgroundColor: 'rgba(156, 54, 181, 0.05)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#9c36b5',
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                padding: 15,
+                                font: { size: 11, weight: '600' },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 11 },
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            borderWidth: 1,
+                            displayColors: true,
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Température (°C) / Humidité (%)', font: { size: 11, weight: 'bold' } },
+                            min: 0,
+                            max: 100,
+                            grid: { drawBorder: true, color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Qualité (ppm, µS/cm)', font: { size: 11, weight: 'bold' } },
+                            min: 0,
+                            max: 2000,
+                            grid: { drawBorder: true, color: 'rgba(0, 0, 0, 0.05)', display: false }
+                        },
+                        x: {
+                            grid: { display: true, color: 'rgba(0, 0, 0, 0.05)' },
+                            title: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!chartInstance) return;
+
+            chartInstance.data.labels = sensorData.labels.map((_, i) => i % 10 === 0 ? sensorData.labels[i] : '');
+            chartInstance.data.datasets[0].data = sensorData.temp;
+            chartInstance.data.datasets[1].data = sensorData.humidity;
+            chartInstance.data.datasets[2].data = sensorData.mq135;
+            chartInstance.data.datasets[3].data = sensorData.mq9;
+            chartInstance.data.datasets[4].data = sensorData.water;
+            chartInstance.data.datasets[5].data = sensorData.waterTemp;
+            chartInstance.update('none');
+        }
+
+        // ========== STATS ==========
+        function updateStats() {
+            if (sensorData.temp.length === 0) return;
+
+            const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+            
+            document.getElementById('avgTemp').textContent = avg(sensorData.temp).toFixed(1);
+            document.getElementById('avgHum').textContent = avg(sensorData.humidity).toFixed(1);
+            document.getElementById('airQuality').textContent = Math.round(avg(sensorData.mq135));
+        }
+
+        function updateUptime() {
+            const uptime = Math.floor((Date.now() - startTime) / 60000);
+            const hours = Math.floor(uptime / 60);
+            const minutes = uptime % 60;
+            document.getElementById('uptime').textContent = hours + 'h ' + minutes + 'm';
+        }
+
+        // ========== UI FUNCTIONS ==========
+        function updateStatusBadge(isConnected) {
+            const badge = document.getElementById('statusBadge');
+            if (isConnected) {
+                badge.classList.remove('offline');
+                badge.innerHTML = '<div class="status-dot"></div><span>Connecté</span>';
+            } else {
+                badge.classList.add('offline');
+                badge.innerHTML = '<div class="status-dot"></div><span>Déconnecté</span>';
+            }
+        }
+
+        function showAlert(title, message, type = 'warning') {
+            const alertDiv = document.getElementById('alertSection');
+            const titleDiv = document.getElementById('alertTitleText');
+            const messageDiv = document.getElementById('alertMessage');
+
+            titleDiv.textContent = title;
+            messageDiv.textContent = message;
+            alertDiv.classList.add('show');
+            alertDiv.classList.toggle('critical', type === 'danger');
+        }
+
+        function setupVolumeSlider() {
+            const slider = document.getElementById('volumeSlider');
+            const value = document.getElementById('volumeValue');
+            slider.addEventListener('input', (e) => {
+                value.textContent = e.target.value;
+            });
+        }
+
+        function saveSettings() {
+            // Ici vous pouvez sauvegarder les paramètres
+            bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+        }
+    </script>
+</body>
+</html>

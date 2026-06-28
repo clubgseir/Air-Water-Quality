@@ -1,0 +1,24 @@
+# Moniteur Air & Eau PRO v3.0
+# Dépendances Python - Backend Flask
+
+# Framework web
+flask==3.0.0
+flask-cors==4.0.0
+
+# WebSocket
+flask-socketio==5.3.5
+python-socketio==5.9.0
+python-engineio==4.7.1
+
+# Communication série
+pyserial==3.5
+
+# Dépendances additionnelles
+Werkzeug==3.0.1
+python-dotenv==1.0.0
+
+# Installation:
+# pip install -r requirements.txt
+
+# Ou installation manuelle:
+# pip install flask flask-cors flask-socketio python-socketio python-engineio pyserial
